@@ -1,3 +1,4 @@
+; Game object definitions
 (defparameter *nodes* '((living-room (you are in the living-room. a wizard is snoring loudly on the couhc.))
                         (garden (you are in a beautiful garden. there is well in front of you.))
                         (attic (you are in the attic. there is a giant welding torch in the corner.))))
@@ -15,6 +16,7 @@
 
 (defparameter *location* 'living-room)
 
+; Game environments
 (defun describe-location (location nodes)
   (cadr (assoc location nodes)))
 
@@ -48,6 +50,7 @@
              (look))
       '(you cannot go that way.))))
 
+; Picking up and storing objects
 (defun pickup (object)
   (cond ((member object
                  (objects-at *location* *objects* *object-locations*))
@@ -55,4 +58,45 @@
          `(you are now carrying ,object))
         (t '(you cannot get that.))))
 
+(defun inventory ()
+  (cons 'items- (objects-at 'body *objects* *object-locations*)))
 
+; Game input and loop
+(defparameter *allowed-commands* '(look walk pickup inventory))
+
+(defun game-eval (sexp)
+  (if (member (car sexp) *allowed-commands*)
+    (eval sexp)
+    '(i do not know that command.)))
+
+(defun game-read ()
+  (let ((cmd (read-from-string
+               (concatenate 'string "(" (read-line) ")"))))
+    (flet ((quote-it (x)
+                     (list 'quote x)))
+      (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
+
+(defun tweak-text (lst caps lit)
+  (when lst
+    (let ((item (car lst))
+          (rest (cdr lst)))
+      (cond ((eql item #\space) (cons item (tweak-text rest caps lit)))
+            ((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
+            (lit (cons item (tweak-text rest nil lit)))
+            (caps (cons (char-upcase item) (tweak-text rest nil lit)))
+            (t (cons (char-downcase item) (tweak-text rest nil nil)))))))
+
+(defun game-print (lst)
+  (princ (coerce (tweak-text (coerce (string-trim "() "
+                                                  (prin1-to-string lst))
+                                     'list)
+                             t
+                             nil)
+                 'string))
+  (fresh-line))
+
+(defun game-repl ()
+  (let ((cmd (game-read)))
+    (unless (eq (car cmd) 'quit)
+      (game-print (game-eval cmd))
+      (game-repl))))
