@@ -1,9 +1,9 @@
 ; Game object definitions
-(defparameter *nodes* '((living-room (you are in the living-room. a wizard is snoring loudly on the couhc.))
+(defparameter *wizard-nodes* '((living-room (you are in the living-room. a wizard is snoring loudly on the couhc.))
                         (garden (you are in a beautiful garden. there is well in front of you.))
                         (attic (you are in the attic. there is a giant welding torch in the corner.))))
 
-(defparameter *edges* '((living-room (garden west door) (attic upstairs ladder))
+(defparameter *wizard-edges* '((living-room (garden west door) (attic upstairs ladder))
                         (garden (living-room east door))
                         (attic (living-room downstairs ladder))))
 
@@ -37,13 +37,13 @@
     (apply #'append (mapcar #'describe-obj (objects-at loc objs obj-loc)))))
 
 (defun look () 
-  (append (describe-location *location* *nodes*)
-          (describe-paths *location* *edges*)
+  (append (describe-location *location* *wizard-nodes*)
+          (describe-paths *location* *wizard-edges*)
           (describe-objects *location* *objects* *object-locations*)))
 
 (defun walk (direction)
   (let ((next (find direction
-                    (cdr (assoc *location* *edges*))
+                    (cdr (assoc *location* *wizard-edges*))
                     :key #'cadr)))
     (if next
       (progn (setf *location* (car next))
